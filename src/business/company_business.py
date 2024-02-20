@@ -1,5 +1,5 @@
 from src.database.companies_database import CompaniesDatabase
-from src.dtos.company.input_create_company import CreateCompanySchema
+from src.services.validate_cnpj_cpf import ValidateCPFCNPJ
 from src.dtos.company.input_edit_company import EditCompanySchema
 from src.error.duplicity_error import DuplicityError
 from src.error.not_found_error import NotFoundError
@@ -53,34 +53,39 @@ class CompaniesBusiness(CompaniesDatabase):
         return sorted(datas, key=lambda x: locale.strxfrm(x['name']), reverse=order)
 
     def create_company(self, name: str, cnpj: str):
-        try:
 
-            CreateCompanySchema().load({
-                "name": name,
-                "cnpj": cnpj
-            })
+        message_error = {}
 
-            cnpj_exist = self._findCompanyByCNPJ_db(cnpj="".join(filter(str.isdigit, cnpj)))
+        if len(name) < 3:
+            message_error["name"] = "O nome precisa ter pelo menos 3 caracteres."
 
-            if cnpj_exist:
-                raise DuplicityError("O cnpj informado já exite em nossa base de dados.")
+        cnpj_exist = self._findCompanyByCNPJ_db(cnpj="".join(filter(str.isdigit, cnpj)))
 
-            name_exist = self._findCompanyByName_db(name=name.lower())
+        validate_cnpj = ValidateCPFCNPJ().validate(cnpj)
 
-            if name_exist:
-                raise DuplicityError("O nome informado já exite em nossa base de dados.")
+        if not validate_cnpj["status"]:
+            message_error["cnpj"] = validate_cnpj["message"]
 
-            id = uuid.uuid4()
+        if len(message_error) > 0:
+            raise ValueError(message_error)
 
-            self._create_company(
-                id,
-                name,
-                "".join(filter(str.isdigit, cnpj))
-            )
+        if cnpj_exist:
+            raise DuplicityError("O cnpj informado já existe em nossa base de dados.")
 
-            print("Cadastro efeuado com sucesso!")
-        except ValidationError as error:
-            print(error.messages)
+        name_exist = self._findCompanyByName_db(name=name.lower())
+
+        if name_exist:
+            raise DuplicityError("O nome informado já existe em nossa base de dados.")
+
+        id = uuid.uuid4()
+
+        self._create_company(
+            id,
+            name,
+            "".join(filter(str.isdigit, cnpj))
+        )
+
+        print("Cadastro efetuado com sucesso!")
 
     def edit_company(self, id: str, name: str | None = None, cnpj: str | None = None):
         try:
@@ -112,7 +117,6 @@ class CompaniesBusiness(CompaniesDatabase):
                 if cnpj_exist and (cnpj_exist.id != id_exist.id):
                     raise DuplicityError("O cnpj informado já exite em nossa base de dados.")
 
-
             self._edit_company(
                 id,
                 name,
@@ -143,6 +147,3 @@ if __name__ == "__main__":
 
     for r in result:
         print(r)
-
-
-

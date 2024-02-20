@@ -32,3 +32,4 @@ def validate_create_company_schema(name: str, cnpj: str):
         print("Validação feita com sucesso")
     except ValidationError as error:
         pprint(error.messages)
+
