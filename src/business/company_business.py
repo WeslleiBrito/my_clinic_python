@@ -142,7 +142,6 @@ class CompaniesBusiness(CompaniesDatabase):
 
 if __name__ == "__main__":
     class_business = CompaniesBusiness()
-    class_business.create_company("Sabrina e Thiago Limpeza ME", "26.060.317/0001-07")
     result = class_business.findCompanyAll()
 
     for r in result:

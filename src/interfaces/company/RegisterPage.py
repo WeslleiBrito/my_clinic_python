@@ -25,12 +25,11 @@ def main(page: ft.Page):
 
     name = ft.TextField(label="Nome da empresa")
     cnpj = ft.TextField(label="CNPJ OU CPF")
-
+    
     page.add(
         name,
         cnpj,
-
-        ft.ElevatedButton("Enviar", on_click=send)
+        ft.ElevatedButton("Salvar", on_click=send)
     )
 
 
